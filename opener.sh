@@ -9,6 +9,10 @@
 #                                With OAUTH_PORT (not 0), also a local forward:
 #                                this OAUTH_PORT -> HOST's localhost:OAUTH_PORT,
 #                                for MCP OAuth callbacks to agents on HOST.
+#   opener.sh agent HOST         ssh -A session to HOST that does nothing, so
+#                                HOST's ~/.ssh/rc can keep ~/.ssh/agent.sock
+#                                on a live forwarded agent for Rex shells.
+#                                Rex's own tunnel (ssh -N) forwards no agent.
 #
 # On the devbox, the opener-bridge systemd user service (dotfiles home.nix)
 # serves ~/.opener.sock and relays to 127.0.0.1:PORT.
@@ -47,8 +51,21 @@ forward)
     sleep 5
   done
   ;;
+agent)
+  host=$2
+  while :; do
+    # $PPID expands on HOST to this session's sshd, so tail exits with the
+    # connection instead of lingering. No forwards here: Rex's tunnel uses
+    # ExitOnForwardFailure, and a clash would drop it (see README).
+    ssh -A -n -T -o BatchMode=yes -o ServerAliveInterval=15 \
+      -o ServerAliveCountMax=3 -o ControlMaster=no -o ControlPath=none \
+      "$host" 'exec tail -f /dev/null --pid=$PPID'
+    echo "agent session to $host exited ($?); retrying in 5s"
+    sleep 5
+  done
+  ;;
 *)
-  echo "usage: $0 daemon PORT | forward HOST PORT" >&2
+  echo "usage: $0 daemon PORT | forward HOST PORT [OAUTH_PORT] | agent HOST" >&2
   exit 2
   ;;
 esac

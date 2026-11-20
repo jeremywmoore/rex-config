@@ -6,6 +6,8 @@
 --   forward  `rex -S HOST forward new -R PORT:PORT` back to that opener, plus
 --            `-L OAUTH_PORT:localhost:OAUTH_PORT` so MCP OAuth redirects in
 --            this Mac's browser reach agents on HOST (oauth_port=0 skips it)
+--   agent    an idle `ssh -A HOST` so Rex shells on HOST get a forwarded SSH
+--            agent through ~/.ssh/agent.sock (Rex's tunnel forwards none)
 -- The devbox side is the opener-bridge systemd user service in the dotfiles.
 -- Run it with `rex do opener_start` or "Start Opener Forward" in the palette.
 rex.action{
@@ -50,7 +52,12 @@ rex.action{
           direction = "vertical",
           ratio     = 0.5,
           before    = pane("opener", { "sh", script, "daemon", port }),
-          after     = pane("forward", { "sh", script, "forward", host, port, oauth_port }),
+          after     = { split = {
+            direction = "horizontal",
+            ratio     = 0.5,
+            before    = pane("forward", { "sh", script, "forward", host, port, oauth_port }),
+            after     = pane("agent", { "sh", script, "agent", host }),
+          } },
         } },
       } },
     })

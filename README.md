@@ -29,6 +29,12 @@ from `opener.sh`:
 
   If the devbox has no `opener` session to hold the forwards (exit code 3), the
   loop creates one.
+- `agent`: an idle `ssh -A HOST` session, so git in Rex shells on the devbox
+  can use this Mac's SSH keys. Rex's own tunnel is `ssh -N`, which opens no
+  session, so sshd never forwards an agent for it. The devbox's `~/.ssh/rc`
+  points `~/.ssh/agent.sock` at a live forwarded agent, and its `.zshrc` sets
+  `SSH_AUTH_SOCK` to that path in shells not started by sshd. The session adds
+  no forwards, so it can't trip Rex's `ExitOnForwardFailure`.
 
 Arguments, all optional: `host` (default `devbox-j.moore`), `port` (default
 `62222`), `oauth_port` (default `61337`, `0` turns it off).
