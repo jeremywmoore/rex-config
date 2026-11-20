@@ -39,6 +39,12 @@ forward)
     set -- "$@" -L "127.0.0.1:$oauth_port:localhost:$oauth_port"
   fi
   while :; do
+    # Clear forwards left by an earlier run. Rerunning opener_start kills the
+    # old loop without closing its blocks, and the host can keep counting
+    # their client as connected, so the new forward fails with "address
+    # already in use" instead of taking them over. Only this loop uses the
+    # host's `opener` session, so closing everything in it is safe.
+    rex -S "$host" forward close -s opener --all >/dev/null 2>&1
     rex -S "$host" forward new -s opener "$@"
     code=$?
     if [ "$code" -eq 3 ]; then

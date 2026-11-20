@@ -28,7 +28,9 @@ from `opener.sh`:
   - `-L 127.0.0.1:61337:localhost:61337`: MCP OAuth callbacks to the devbox
 
   If the devbox has no `opener` session to hold the forwards (exit code 3), the
-  loop creates one.
+  loop creates one. Before each attempt it closes any forwards left in that
+  session by an earlier run, which otherwise hold the ports and fail the new
+  forward with "address already in use".
 - `agent`: an idle `ssh -A HOST` session, so git in Rex shells on the devbox
   can use this Mac's SSH keys. Rex's own tunnel is `ssh -N`, which opens no
   session, so sshd never forwards an agent for it. The devbox's `~/.ssh/rc`
